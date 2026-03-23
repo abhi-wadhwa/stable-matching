@@ -1,0 +1,130 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{hyperref}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{definition}{Definition}
+\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
+
+\title{Stable Matching: Deferred Acceptance, Lattice Structure, and Extensions}
+\author{Abhi Wadhwa}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Notes on stable matching theory, starting from the Gale--Shapley deferred acceptance algorithm and working up to the lattice structure of stable matchings, the rural hospitals theorem, and many-to-one extensions. I focus on building intuition for why stability is the ``right'' solution concept, why deferred acceptance is strategy-proof for proposers, and what the lattice structure tells us about the inherent conflict between the two sides of the market.
+\end{abstract}
+
+\section{The Setup}
+
+We have $n$ men and $n$ women (or more generally, two disjoint groups---I'll use the classical terminology since it matches the original paper). Each man has a strict preference ranking over all women, and each woman has a strict ranking over all men. A \textbf{matching} $\mu$ is a bijection pairing each man with exactly one woman.
+
+\begin{definition}
+A matching $\mu$ is \textbf{stable} if there is no \textbf{blocking pair}---no pair $(m, w)$ such that $m$ prefers $w$ to $\mu(m)$ and $w$ prefers $m$ to $\mu(w)$.
+\end{definition}
+
+The intuition for stability is simple: if a blocking pair exists, those two people would rather ditch their current partners and pair up with each other. Any matching with a blocking pair is ``unstable'' in the sense that it contains the seeds of its own destruction. Stability says: nobody has both the desire and the opportunity to deviate.
+
+The first question is: does a stable matching always exist? It's not obvious. You might think preference cycles could prevent any stable matching from existing (like in social choice theory, where Condorcet cycles cause problems). But Gale and Shapley \cite{galeshapley1962} proved that a stable matching always exists, by giving an algorithm that constructs one.
+
+\section{Deferred Acceptance}
+
+The \textbf{deferred acceptance} (DA) algorithm is elegant and runs in at most $n^2$ steps. Here's how it works, with men proposing:
+
+\begin{enumerate}
+\item Each unmatched man proposes to the highest-ranked woman on his list that he hasn't proposed to yet.
+\item Each woman looks at all the proposals she's received (including any man she's currently ``holding'') and \textbf{tentatively holds} the best one, rejecting the rest.
+\item Rejected men go back to step 1.
+\end{enumerate}
+
+Repeat until everyone is matched. The key word is ``tentatively''---women never permanently commit. They hold the best offer so far but can upgrade later. This is why it's called \emph{deferred} acceptance.
+
+\textbf{Termination.} Each man proposes to each woman at most once, so there are at most $n^2$ proposals total. In the worst case, the first man proposes to all $n$ women before settling.
+
+\textbf{Correctness.} The output is always a stable matching. The proof is by contradiction: suppose $(m, w)$ is a blocking pair. Then $m$ prefers $w$ to his partner $\mu(m)$, which means $m$ must have proposed to $w$ before proposing to $\mu(m)$ (since men propose in order of preference). But if $m$ proposed to $w$ and $w$ didn't end up with $m$, that means $w$ rejected $m$ in favor of someone she likes more. Since $w$ only trades up, her final partner $\mu(w)$ is at least as good as the man she held when she rejected $m$, which means $w$ prefers $\mu(w)$ to $m$. So $(m, w)$ isn't a blocking pair after all. Contradiction.
+
+I love how clean this argument is. The deferred acceptance mechanism is self-reinforcing: the very process that generates the matching also guarantees its stability.
+
+\section{Proposer-Optimality and Strategy-Proofness}
+
+Here's something I didn't appreciate at first: \textbf{the proposing side gets the best possible stable matching}, and the receiving side gets the worst.
+
+\begin{theorem}[Gale--Shapley]
+Man-proposing DA produces the \textbf{man-optimal} stable matching: every man gets his best achievable stable partner (the highest-ranked woman he could be matched to in any stable matching). Simultaneously, every woman gets her worst stable partner.
+\end{theorem}
+
+This is a remarkable result. It means there's an inherent asymmetry in DA---the proposing side has a structural advantage. Running DA with women proposing gives the woman-optimal, man-pessimal matching. The two extremes bracket all stable matchings.
+
+The proof uses the following observation: no man is ever rejected by a woman who could be his stable partner. If $m$ is rejected by $w$, then $w$ is holding someone she prefers, and you can show by induction that this someone is also achievable for $w$ in some stable matching. So $m$ could never have been matched to $w$ in any stable matching. This means men propose ``downward'' through their achievable partners and end up with the best one.
+
+An important corollary is \textbf{strategy-proofness for the proposing side}:
+
+\begin{theorem}
+Man-proposing DA is \textbf{strategy-proof} for men: no man can get a better outcome by misreporting his preferences, regardless of what the other men and women do.
+\end{theorem}
+
+This is a dominant strategy result---strong and unconditional. However, DA is \textbf{not} strategy-proof for the receiving side. Women can sometimes benefit from strategic manipulation (e.g., rejecting an acceptable man to get a better match later). In practice, the gains from manipulation are limited, especially in large markets (Roth and Peranson \cite{roth1999}).
+
+\section{The Lattice of Stable Matchings}
+
+This is where the theory gets really beautiful. The set of all stable matchings has a rich algebraic structure.
+
+\begin{definition}
+Define a partial order on stable matchings: $M_1 \preceq M_2$ if every man weakly prefers $M_2$ to $M_1$ (i.e., every man gets a partner at least as good in $M_2$).
+\end{definition}
+
+\begin{theorem}[Conway, Knuth]
+The set of stable matchings under $\preceq$ forms a \textbf{distributive lattice}. The man-optimal matching is the top element, and the woman-optimal matching is the bottom element.
+\end{theorem}
+
+The \textbf{join} $M_1 \vee M_2$ gives each man the partner he prefers between $M_1$ and $M_2$. The \textbf{meet} $M_1 \wedge M_2$ gives each man the partner he likes less. The lattice theorem says that both the join and meet of two stable matchings are themselves stable. This is not obvious at all---when you ``cherry-pick'' the better partner for each man, you might expect to create blocking pairs, but you don't.
+
+The lattice structure reveals something deep about stable matching: \textbf{the interests of the two sides are perfectly opposed}. Moving up in the lattice (better for men) is moving down for women, and vice versa. Every stable matching represents a different point on this tradeoff.
+
+\subsection{Rotations}
+
+The lattice structure is generated by objects called \textbf{rotations}. A rotation $\rho = ((m_0, w_0), (m_1, w_1), \ldots, (m_{k-1}, w_{k-1}))$ is a cyclic sequence of man-woman pairs from a stable matching $M$ such that ``eliminating'' $\rho$ from $M$ re-matches each $m_i$ to $w_{(i+1) \bmod k}$, producing another stable matching.
+
+The set of all rotations, partially ordered by a dependency relation, completely characterizes the lattice. Every stable matching corresponds to a \textbf{closed subset} (downward-closed set) of the rotation poset. This gives you a concrete way to enumerate all stable matchings: generate the rotation poset, then enumerate its antichains (or equivalently, its closed subsets).
+
+I think rotations are one of those concepts that seem needlessly abstract at first but turn out to be incredibly useful for computation. Without them, you'd have to search exponentially; with them, the structure of the stable matching set becomes transparent.
+
+\section{Rural Hospitals Theorem}
+
+This result is about the \textbf{hospital-resident problem}, the many-to-one extension where hospitals have quotas $q_h$ (they can accept up to $q_h$ residents). Modified DA lets hospitals hold up to $q_h$ proposals.
+
+\begin{theorem}[Rural Hospitals Theorem]
+In all stable matchings:
+\begin{enumerate}
+\item The \textbf{same set of residents} is matched (the same residents are unmatched).
+\item Any hospital that is \textbf{under-subscribed} in one stable matching is under-subscribed in all stable matchings, with the \textbf{same set of residents}.
+\end{enumerate}
+\end{theorem}
+
+The name comes from the practical implication: if a rural hospital can't fill its positions in the resident-optimal stable matching, switching to the hospital-optimal stable matching won't help---it'll still have vacancies, and it'll get the same residents either way. The ``rural hospital problem'' is a real policy issue (some hospitals in undesirable locations can't attract enough residents), and this theorem says that \textbf{no manipulation of the matching algorithm can fix it}. The problem is fundamentally about preferences, not about the mechanism.
+
+This result is simultaneously elegant and depressing. It means that the choice of which stable matching to implement doesn't affect who gets matched---only how well the matched agents do.
+
+\section{Practical Significance}
+
+The theory of stable matching isn't just pretty math. The National Resident Matching Program (NRMP) in the US uses a variant of deferred acceptance to match approximately 40,000 medical graduates to residency programs each year. The algorithm was redesigned by Roth and Peranson in the late 1990s to handle couples and other complications, and it's been running since 1998. Roth received the 2012 Nobel Prize in Economics in part for this work.
+
+The success of stable matching in practice illustrates something important: \textbf{good mechanism design requires theory}. The NRMP ran an ad hoc algorithm for decades before discovering (with Roth's help) that it was essentially computing a stable matching. Once they understood the theory, they could fix the algorithm's problems systematically.
+
+\begin{thebibliography}{9}
+\bibitem{galeshapley1962} D.~Gale and L.~S. Shapley, ``College admissions and the stability of marriage,'' \textit{The American Mathematical Monthly}, vol.~69, no.~1, pp.~9--15, 1962.
+
+\bibitem{roth1984} A.~E. Roth, ``The evolution of the labor market for medical interns and residents: A case study in game theory,'' \textit{Journal of Political Economy}, vol.~92, no.~6, pp.~991--1016, 1984.
+
+\bibitem{roth1999} A.~E. Roth and E.~Peranson, ``The redesign of the matching market for American physicians: Some engineering aspects of economic design,'' \textit{American Economic Review}, vol.~89, no.~4, pp.~748--780, 1999.
+
+\bibitem{irving1986} R.~W. Irving and P.~Leather, ``The complexity of counting stable marriages,'' \textit{SIAM Journal on Computing}, vol.~15, no.~3, pp.~655--667, 1986.
+
+\bibitem{knuth1976} D.~E. Knuth, \textit{Mariages stables et leurs relations avec d'autres probl\`emes combinatoires}, Les Presses de l'Universit\'e de Montr\'eal, 1976.
+\end{thebibliography}
+
+\end{document}
