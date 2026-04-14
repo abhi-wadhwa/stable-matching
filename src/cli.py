@@ -6,14 +6,12 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
-from typing import Dict, List
 
 from src.core.gale_shapley import gale_shapley, receiver_optimal
-from src.core.stability import find_blocking_pairs, is_stable
+from src.core.generators import random_hospital_market, random_market
+from src.core.hospital_resident import find_hr_blocking_pairs, hospital_resident_da
 from src.core.lattice import enumerate_stable_matchings
-from src.core.hospital_resident import hospital_resident_da, find_hr_blocking_pairs
-from src.core.generators import random_market, correlated_market, random_hospital_market
+from src.core.stability import find_blocking_pairs
 
 
 def cmd_solve(args: argparse.Namespace) -> None:

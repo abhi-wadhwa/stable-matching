@@ -21,13 +21,12 @@ References:
 from __future__ import annotations
 
 from collections import deque
-from typing import Dict, List, Optional, Tuple
 
 
 def gale_shapley(
-    proposer_prefs: Dict[str, List[str]],
-    receiver_prefs: Dict[str, List[str]],
-) -> Dict[str, str]:
+    proposer_prefs: dict[str, list[str]],
+    receiver_prefs: dict[str, list[str]],
+) -> dict[str, str]:
     """Run the Gale-Shapley deferred-acceptance algorithm.
 
     Parameters
@@ -54,15 +53,15 @@ def gale_shapley(
     {'m1': 'w1', 'm2': 'w2'}
     """
     # Build rank lookup for each receiver for O(1) comparisons.
-    receiver_rank: Dict[str, Dict[str, int]] = {}
+    receiver_rank: dict[str, dict[str, int]] = {}
     for r, pref_list in receiver_prefs.items():
         receiver_rank[r] = {p: idx for idx, p in enumerate(pref_list)}
 
     # Track how far down each proposer's list they have gone.
-    next_proposal: Dict[str, int] = {p: 0 for p in proposer_prefs}
+    next_proposal: dict[str, int] = {p: 0 for p in proposer_prefs}
 
     # Current tentative matching (receiver -> proposer currently held).
-    current_holder: Dict[str, Optional[str]] = {r: None for r in receiver_prefs}
+    current_holder: dict[str, str | None] = {r: None for r in receiver_prefs}
 
     # Queue of free proposers who still have someone to propose to.
     free: deque[str] = deque(proposer_prefs.keys())
@@ -97,17 +96,17 @@ def gale_shapley(
             free.append(proposer)
 
     # Build proposer -> receiver mapping.
-    matching: Dict[str, str] = {}
-    for receiver, proposer in current_holder.items():
-        if proposer is not None:
-            matching[proposer] = receiver
+    matching: dict[str, str] = {}
+    for receiver, held_proposer in current_holder.items():
+        if held_proposer is not None:
+            matching[held_proposer] = receiver
     return matching
 
 
 def gale_shapley_weak(
-    proposer_prefs: Dict[str, List[List[str]]],
-    receiver_prefs: Dict[str, List[List[str]]],
-) -> Dict[str, str]:
+    proposer_prefs: dict[str, list[list[str]]],
+    receiver_prefs: dict[str, list[list[str]]],
+) -> dict[str, str]:
     """Gale-Shapley for preferences with ties (weakly stable matching).
 
     Preferences are given as lists of *tie groups* (most preferred first).
@@ -130,8 +129,8 @@ def gale_shapley_weak(
         ``{proposer: receiver}`` -- a weakly stable matching.
     """
 
-    def flatten(grouped: Dict[str, List[List[str]]]) -> Dict[str, List[str]]:
-        flat: Dict[str, List[str]] = {}
+    def flatten(grouped: dict[str, list[list[str]]]) -> dict[str, list[str]]:
+        flat: dict[str, list[str]] = {}
         for agent, groups in grouped.items():
             flat[agent] = [item for group in groups for item in group]
         return flat
@@ -140,9 +139,9 @@ def gale_shapley_weak(
 
 
 def receiver_optimal(
-    proposer_prefs: Dict[str, List[str]],
-    receiver_prefs: Dict[str, List[str]],
-) -> Dict[str, str]:
+    proposer_prefs: dict[str, list[str]],
+    receiver_prefs: dict[str, list[str]],
+) -> dict[str, str]:
     """Compute the receiver-optimal (proposer-pessimal) stable matching.
 
     This is equivalent to running DA with receivers as proposers.
@@ -159,9 +158,9 @@ def receiver_optimal(
 
 
 def da_trace(
-    proposer_prefs: Dict[str, List[str]],
-    receiver_prefs: Dict[str, List[str]],
-) -> Tuple[Dict[str, str], List[dict]]:
+    proposer_prefs: dict[str, list[str]],
+    receiver_prefs: dict[str, list[str]],
+) -> tuple[dict[str, str], list[dict]]:
     """Run DA and return a round-by-round trace for visualization.
 
     Returns
@@ -172,20 +171,20 @@ def da_trace(
         - ``rejections``: list of ``(proposer, receiver)``
         - ``holds``: list of ``(receiver, proposer)``
     """
-    receiver_rank: Dict[str, Dict[str, int]] = {}
+    receiver_rank: dict[str, dict[str, int]] = {}
     for r, pref_list in receiver_prefs.items():
         receiver_rank[r] = {p: idx for idx, p in enumerate(pref_list)}
 
-    next_proposal: Dict[str, int] = {p: 0 for p in proposer_prefs}
-    current_holder: Dict[str, Optional[str]] = {r: None for r in receiver_prefs}
+    next_proposal: dict[str, int] = {p: 0 for p in proposer_prefs}
+    current_holder: dict[str, str | None] = {r: None for r in receiver_prefs}
     free: deque[str] = deque(proposer_prefs.keys())
 
-    rounds: List[dict] = []
+    rounds: list[dict] = []
 
     while free:
-        proposals: List[Tuple[str, str]] = []
-        rejections: List[Tuple[str, str]] = []
-        holds: List[Tuple[str, str]] = []
+        proposals: list[tuple[str, str]] = []
+        rejections: list[tuple[str, str]] = []
+        holds: list[tuple[str, str]] = []
 
         # Collect all proposals for this round.
         proposers_this_round = list(free)
@@ -228,8 +227,8 @@ def da_trace(
                 }
             )
 
-    matching: Dict[str, str] = {}
-    for receiver, proposer in current_holder.items():
-        if proposer is not None:
-            matching[proposer] = receiver
+    matching: dict[str, str] = {}
+    for receiver, held_proposer in current_holder.items():
+        if held_proposer is not None:
+            matching[held_proposer] = receiver
     return matching, rounds

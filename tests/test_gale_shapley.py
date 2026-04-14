@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from src.core.gale_shapley import gale_shapley, receiver_optimal, da_trace, gale_shapley_weak
-from src.core.stability import find_blocking_pairs, is_stable
+from src.core.gale_shapley import da_trace, gale_shapley, gale_shapley_weak, receiver_optimal
 from src.core.generators import random_market
+from src.core.stability import is_stable
 
 
 class TestBasicDA:

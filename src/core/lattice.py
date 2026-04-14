@@ -21,23 +21,17 @@ References:
 
 from __future__ import annotations
 
-from itertools import combinations
-from typing import Dict, FrozenSet, List, Optional, Set, Tuple
-
-from src.core.gale_shapley import gale_shapley, receiver_optimal
+from src.core.gale_shapley import gale_shapley
 from src.core.rotations import (
-    Rotation,
-    build_rotation_poset,
     eliminate_rotation,
     find_rotations,
 )
-from src.core.stability import is_stable
 
 
 def enumerate_stable_matchings(
-    proposer_prefs: Dict[str, List[str]],
-    receiver_prefs: Dict[str, List[str]],
-) -> List[Dict[str, str]]:
+    proposer_prefs: dict[str, list[str]],
+    receiver_prefs: dict[str, list[str]],
+) -> list[dict[str, str]]:
     """Enumerate all stable matchings for a given instance.
 
     Uses BFS over rotation eliminations starting from the proposer-optimal
@@ -55,17 +49,17 @@ def enumerate_stable_matchings(
         All stable matchings ``{proposer: receiver}``.
     """
     m0 = gale_shapley(proposer_prefs, receiver_prefs)
-    all_matchings: List[Dict[str, str]] = [m0]
-    visited: Set[str] = set()
+    all_matchings: list[dict[str, str]] = [m0]
+    visited: set[str] = set()
 
-    def matching_key(m: Dict[str, str]) -> str:
+    def matching_key(m: dict[str, str]) -> str:
         return str(sorted(m.items()))
 
     visited.add(matching_key(m0))
 
     from collections import deque
 
-    queue: deque[Dict[str, str]] = deque([m0])
+    queue: deque[dict[str, str]] = deque([m0])
 
     while queue:
         current = queue.popleft()
@@ -85,11 +79,11 @@ def enumerate_stable_matchings(
 
 
 def _dominance_key(
-    matching: Dict[str, str],
-    proposer_prefs: Dict[str, List[str]],
-) -> Dict[str, int]:
+    matching: dict[str, str],
+    proposer_prefs: dict[str, list[str]],
+) -> dict[str, int]:
     """Map each proposer to the rank of their partner (lower = better)."""
-    p_rank: Dict[str, Dict[str, int]] = {
+    p_rank: dict[str, dict[str, int]] = {
         p: {r: i for i, r in enumerate(pl)} for p, pl in proposer_prefs.items()
     }
     return {
@@ -99,11 +93,11 @@ def _dominance_key(
 
 
 def lattice_join(
-    m1: Dict[str, str],
-    m2: Dict[str, str],
-    proposer_prefs: Dict[str, List[str]],
-    receiver_prefs: Dict[str, List[str]],
-) -> Dict[str, str]:
+    m1: dict[str, str],
+    m2: dict[str, str],
+    proposer_prefs: dict[str, list[str]],
+    receiver_prefs: dict[str, list[str]],
+) -> dict[str, str]:
     """Compute the lattice join (proposer-best) of two stable matchings.
 
     For each proposer, take the partner they prefer more.  The result is
@@ -121,11 +115,11 @@ def lattice_join(
     dict
         The join ``m1 \\vee m2`` in the stable matching lattice.
     """
-    p_rank: Dict[str, Dict[str, int]] = {
+    p_rank: dict[str, dict[str, int]] = {
         p: {r: i for i, r in enumerate(pl)} for p, pl in proposer_prefs.items()
     }
 
-    join: Dict[str, str] = {}
+    join: dict[str, str] = {}
     for m in proposer_prefs:
         w1 = m1.get(m)
         w2 = m2.get(m)
@@ -146,11 +140,11 @@ def lattice_join(
 
 
 def lattice_meet(
-    m1: Dict[str, str],
-    m2: Dict[str, str],
-    proposer_prefs: Dict[str, List[str]],
-    receiver_prefs: Dict[str, List[str]],
-) -> Dict[str, str]:
+    m1: dict[str, str],
+    m2: dict[str, str],
+    proposer_prefs: dict[str, list[str]],
+    receiver_prefs: dict[str, list[str]],
+) -> dict[str, str]:
     """Compute the lattice meet (proposer-worst) of two stable matchings.
 
     For each proposer, take the partner they like *less*.  The result is
@@ -168,11 +162,11 @@ def lattice_meet(
     dict
         The meet ``m1 \\wedge m2`` in the stable matching lattice.
     """
-    p_rank: Dict[str, Dict[str, int]] = {
+    p_rank: dict[str, dict[str, int]] = {
         p: {r: i for i, r in enumerate(pl)} for p, pl in proposer_prefs.items()
     }
 
-    meet: Dict[str, str] = {}
+    meet: dict[str, str] = {}
     for m in proposer_prefs:
         w1 = m1.get(m)
         w2 = m2.get(m)
@@ -192,9 +186,9 @@ def lattice_meet(
 
 
 def hasse_diagram(
-    matchings: List[Dict[str, str]],
-    proposer_prefs: Dict[str, List[str]],
-) -> List[Tuple[int, int]]:
+    matchings: list[dict[str, str]],
+    proposer_prefs: dict[str, list[str]],
+) -> list[tuple[int, int]]:
     """Compute the Hasse diagram edges for a list of stable matchings.
 
     Returns edges ``(i, j)`` meaning matching ``i`` covers matching ``j``
@@ -224,14 +218,14 @@ def hasse_diagram(
         return True
 
     # Build dominance relation (i >= j means proposers prefer or equal i).
-    dom: List[List[bool]] = [[False] * n for _ in range(n)]
+    dom: list[list[bool]] = [[False] * n for _ in range(n)]
     for i in range(n):
         for j in range(n):
             if i != j and dominates(i, j):
                 dom[i][j] = True
 
     # Hasse: i covers j if i > j and there is no k with i > k > j.
-    edges: List[Tuple[int, int]] = []
+    edges: list[tuple[int, int]] = []
     for i in range(n):
         for j in range(n):
             if not dom[i][j]:

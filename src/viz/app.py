@@ -12,29 +12,27 @@ Interactive dashboard for exploring stable matching algorithms:
 from __future__ import annotations
 
 import json
-from typing import Dict, List, Tuple
 
-import streamlit as st
 import graphviz
+import streamlit as st
 
-from src.core.gale_shapley import gale_shapley, receiver_optimal, da_trace
-from src.core.stability import find_blocking_pairs, is_stable
+from src.core.gale_shapley import da_trace, receiver_optimal
+from src.core.generators import correlated_market, random_market
+from src.core.hospital_resident import find_hr_blocking_pairs, hospital_resident_da
 from src.core.lattice import enumerate_stable_matchings, hasse_diagram
-from src.core.hospital_resident import hospital_resident_da, find_hr_blocking_pairs
-from src.core.generators import random_market, correlated_market
-
+from src.core.stability import find_blocking_pairs, is_stable
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
 def draw_bipartite_matching(
-    proposers: List[str],
-    receivers: List[str],
-    matching: Dict[str, str],
-    blocking_pairs: List[Tuple[str, str]] | None = None,
-    proposals: List[Tuple[str, str]] | None = None,
-    rejections: List[Tuple[str, str]] | None = None,
+    proposers: list[str],
+    receivers: list[str],
+    matching: dict[str, str],
+    blocking_pairs: list[tuple[str, str]] | None = None,
+    proposals: list[tuple[str, str]] | None = None,
+    rejections: list[tuple[str, str]] | None = None,
     title: str = "Matching",
 ) -> graphviz.Digraph:
     """Draw a bipartite matching using graphviz."""
@@ -75,8 +73,8 @@ def draw_bipartite_matching(
 
 
 def draw_hasse_diagram(
-    matchings: List[Dict[str, str]],
-    edges: List[Tuple[int, int]],
+    matchings: list[dict[str, str]],
+    edges: list[tuple[int, int]],
 ) -> graphviz.Digraph:
     """Draw the Hasse diagram of the stable matching lattice."""
     dot = graphviz.Digraph(comment="Stable Matching Lattice")

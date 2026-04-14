@@ -17,15 +17,14 @@ Correlation structures:
 from __future__ import annotations
 
 import random
-from typing import Dict, List, Optional, Tuple
 
 
 def random_market(
     n: int,
-    seed: Optional[int] = None,
+    seed: int | None = None,
     proposer_prefix: str = "m",
     receiver_prefix: str = "w",
-) -> Tuple[Dict[str, List[str]], Dict[str, List[str]]]:
+) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
     """Generate a uniformly random complete-list market.
 
     Parameters
@@ -46,13 +45,13 @@ def random_market(
     proposers = [f"{proposer_prefix}{i+1}" for i in range(n)]
     receivers = [f"{receiver_prefix}{i+1}" for i in range(n)]
 
-    proposer_prefs: Dict[str, List[str]] = {}
+    proposer_prefs: dict[str, list[str]] = {}
     for p in proposers:
         order = list(receivers)
         rng.shuffle(order)
         proposer_prefs[p] = order
 
-    receiver_prefs: Dict[str, List[str]] = {}
+    receiver_prefs: dict[str, list[str]] = {}
     for r in receivers:
         order = list(proposers)
         rng.shuffle(order)
@@ -64,10 +63,10 @@ def random_market(
 def correlated_market(
     n: int,
     noise: float = 0.3,
-    seed: Optional[int] = None,
+    seed: int | None = None,
     proposer_prefix: str = "m",
     receiver_prefix: str = "w",
-) -> Tuple[Dict[str, List[str]], Dict[str, List[str]]]:
+) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
     """Generate a market with correlated preferences (master-list model).
 
     Each agent has an objective "quality" score.  Preferences are formed
@@ -97,13 +96,13 @@ def correlated_market(
     p_quality = {p: rng.gauss(0, 1) for p in proposers}
     r_quality = {r: rng.gauss(0, 1) for r in receivers}
 
-    proposer_prefs: Dict[str, List[str]] = {}
+    proposer_prefs: dict[str, list[str]] = {}
     for p in proposers:
         # Each proposer ranks receivers by quality + noise.
         scores = {r: r_quality[r] + noise * rng.gauss(0, 1) for r in receivers}
         proposer_prefs[p] = sorted(receivers, key=lambda r: -scores[r])
 
-    receiver_prefs: Dict[str, List[str]] = {}
+    receiver_prefs: dict[str, list[str]] = {}
     for r in receivers:
         scores = {p: p_quality[p] + noise * rng.gauss(0, 1) for p in proposers}
         receiver_prefs[r] = sorted(proposers, key=lambda p: -scores[p])
@@ -114,10 +113,10 @@ def correlated_market(
 def tiered_market(
     n: int,
     n_tiers: int = 3,
-    seed: Optional[int] = None,
+    seed: int | None = None,
     proposer_prefix: str = "m",
     receiver_prefix: str = "w",
-) -> Tuple[Dict[str, List[List[str]]], Dict[str, List[List[str]]]]:
+) -> tuple[dict[str, list[list[str]]], dict[str, list[list[str]]]]:
     """Generate a tiered market with weak preferences (ties).
 
     Agents are divided into tiers.  Each agent prefers higher-tier partners
@@ -146,10 +145,10 @@ def tiered_market(
     p_tier = {p: rng.randint(0, n_tiers - 1) for p in proposers}
     r_tier = {r: rng.randint(0, n_tiers - 1) for r in receivers}
 
-    proposer_prefs: Dict[str, List[List[str]]] = {}
+    proposer_prefs: dict[str, list[list[str]]] = {}
     for p in proposers:
         # Group receivers by tier, order tiers from best (0) to worst.
-        tiers: Dict[int, List[str]] = {t: [] for t in range(n_tiers)}
+        tiers: dict[int, list[str]] = {t: [] for t in range(n_tiers)}
         for r in receivers:
             tiers[r_tier[r]].append(r)
         # Shuffle within each tier.
@@ -161,9 +160,9 @@ def tiered_market(
                 groups.append(tier_list)
         proposer_prefs[p] = groups
 
-    receiver_prefs: Dict[str, List[List[str]]] = {}
+    receiver_prefs: dict[str, list[list[str]]] = {}
     for r in receivers:
-        tiers_map: Dict[int, List[str]] = {t: [] for t in range(n_tiers)}
+        tiers_map: dict[int, list[str]] = {t: [] for t in range(n_tiers)}
         for p in proposers:
             tiers_map[p_tier[p]].append(p)
         groups = []
@@ -182,9 +181,9 @@ def random_hospital_market(
     n_hospitals: int,
     min_quota: int = 1,
     max_quota: int = 3,
-    list_length: Optional[int] = None,
-    seed: Optional[int] = None,
-) -> Tuple[Dict[str, List[str]], Dict[str, List[str]], Dict[str, int]]:
+    list_length: int | None = None,
+    seed: int | None = None,
+) -> tuple[dict[str, list[str]], dict[str, list[str]], dict[str, int]]:
     """Generate a random hospital-resident market.
 
     Parameters
@@ -214,13 +213,13 @@ def random_hospital_market(
     max_len_r = list_length or n_hospitals
     max_len_h = list_length or n_residents
 
-    resident_prefs: Dict[str, List[str]] = {}
+    resident_prefs: dict[str, list[str]] = {}
     for r in residents:
         order = list(hospitals)
         rng.shuffle(order)
         resident_prefs[r] = order[:max_len_r]
 
-    hospital_prefs: Dict[str, List[str]] = {}
+    hospital_prefs: dict[str, list[str]] = {}
     for h in hospitals:
         order = list(residents)
         rng.shuffle(order)
@@ -232,10 +231,10 @@ def random_hospital_market(
 def incomplete_market(
     n: int,
     accept_prob: float = 0.7,
-    seed: Optional[int] = None,
+    seed: int | None = None,
     proposer_prefix: str = "m",
     receiver_prefix: str = "w",
-) -> Tuple[Dict[str, List[str]], Dict[str, List[str]]]:
+) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
     """Generate a market with incomplete preference lists.
 
     Each potential partner is included in the list with probability
@@ -259,13 +258,13 @@ def incomplete_market(
     proposers = [f"{proposer_prefix}{i+1}" for i in range(n)]
     receivers = [f"{receiver_prefix}{i+1}" for i in range(n)]
 
-    proposer_prefs: Dict[str, List[str]] = {}
+    proposer_prefs: dict[str, list[str]] = {}
     for p in proposers:
         acceptable = [r for r in receivers if rng.random() < accept_prob]
         rng.shuffle(acceptable)
         proposer_prefs[p] = acceptable
 
-    receiver_prefs: Dict[str, List[str]] = {}
+    receiver_prefs: dict[str, list[str]] = {}
     for r in receivers:
         acceptable = [p for p in proposers if rng.random() < accept_prob]
         rng.shuffle(acceptable)

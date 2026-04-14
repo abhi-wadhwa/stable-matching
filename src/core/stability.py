@@ -14,10 +14,8 @@ A matching is **stable** iff it admits no blocking pair.
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Set, Tuple
 
-
-def _rank_map(prefs: Dict[str, List[str]]) -> Dict[str, Dict[str, int]]:
+def _rank_map(prefs: dict[str, list[str]]) -> dict[str, dict[str, int]]:
     """Build ``{agent: {other: rank}}`` lookup.  Lower rank = more preferred."""
     return {
         agent: {other: idx for idx, other in enumerate(plist)}
@@ -26,10 +24,10 @@ def _rank_map(prefs: Dict[str, List[str]]) -> Dict[str, Dict[str, int]]:
 
 
 def find_blocking_pairs(
-    matching: Dict[str, str],
-    proposer_prefs: Dict[str, List[str]],
-    receiver_prefs: Dict[str, List[str]],
-) -> List[Tuple[str, str]]:
+    matching: dict[str, str],
+    proposer_prefs: dict[str, list[str]],
+    receiver_prefs: dict[str, list[str]],
+) -> list[tuple[str, str]]:
     """Find all blocking pairs for a given matching.
 
     Parameters
@@ -50,7 +48,7 @@ def find_blocking_pairs(
     r_rank = _rank_map(receiver_prefs)
 
     # Inverse matching: receiver -> proposer.
-    inv_matching: Dict[str, Optional[str]] = {}
+    inv_matching: dict[str, str | None] = {}
     for p, r in matching.items():
         inv_matching[r] = p
     # Ensure all receivers are in the inverse mapping.
@@ -58,12 +56,15 @@ def find_blocking_pairs(
         if r not in inv_matching:
             inv_matching[r] = None
 
-    blocking: List[Tuple[str, str]] = []
+    blocking: list[tuple[str, str]] = []
 
     for m in proposer_prefs:
         current_r = matching.get(m)
         # Rank of current partner for m (infinity if unmatched).
-        m_current_rank = p_rank[m].get(current_r, len(proposer_prefs[m])) if current_r else len(proposer_prefs[m])
+        if current_r:
+            m_current_rank = p_rank[m].get(current_r, len(proposer_prefs[m]))
+        else:
+            m_current_rank = len(proposer_prefs[m])
 
         for w in proposer_prefs[m]:
             # m must prefer w to current partner.
@@ -90,19 +91,19 @@ def find_blocking_pairs(
 
 
 def is_stable(
-    matching: Dict[str, str],
-    proposer_prefs: Dict[str, List[str]],
-    receiver_prefs: Dict[str, List[str]],
+    matching: dict[str, str],
+    proposer_prefs: dict[str, list[str]],
+    receiver_prefs: dict[str, list[str]],
 ) -> bool:
     """Return True iff the matching has no blocking pairs."""
     return len(find_blocking_pairs(matching, proposer_prefs, receiver_prefs)) == 0
 
 
 def find_weakly_blocking_pairs(
-    matching: Dict[str, str],
-    proposer_prefs: Dict[str, List[List[str]]],
-    receiver_prefs: Dict[str, List[List[str]]],
-) -> List[Tuple[str, str]]:
+    matching: dict[str, str],
+    proposer_prefs: dict[str, list[list[str]]],
+    receiver_prefs: dict[str, list[list[str]]],
+) -> list[tuple[str, str]]:
     """Find blocking pairs under weak preferences (with ties).
 
     A pair ``(m, w)`` **weakly blocks** if both ``m`` *strictly* prefers
@@ -123,9 +124,9 @@ def find_weakly_blocking_pairs(
         Weakly blocking pairs.
     """
 
-    def rank_from_groups(groups: List[List[str]]) -> Dict[str, int]:
+    def rank_from_groups(groups: list[list[str]]) -> dict[str, int]:
         """Map each agent to its tier index (lower = more preferred)."""
-        ranks: Dict[str, int] = {}
+        ranks: dict[str, int] = {}
         for tier_idx, group in enumerate(groups):
             for agent in group:
                 ranks[agent] = tier_idx
@@ -134,7 +135,7 @@ def find_weakly_blocking_pairs(
     p_rank = {p: rank_from_groups(groups) for p, groups in proposer_prefs.items()}
     r_rank = {r: rank_from_groups(groups) for r, groups in receiver_prefs.items()}
 
-    inv_matching: Dict[str, Optional[str]] = {}
+    inv_matching: dict[str, str | None] = {}
     for p, r in matching.items():
         inv_matching[r] = p
     for r in receiver_prefs:
@@ -144,7 +145,7 @@ def find_weakly_blocking_pairs(
     n_p_tiers = {p: len(groups) for p, groups in proposer_prefs.items()}
     n_r_tiers = {r: len(groups) for r, groups in receiver_prefs.items()}
 
-    blocking: List[Tuple[str, str]] = []
+    blocking: list[tuple[str, str]] = []
 
     for m, m_ranks in p_rank.items():
         current_r = matching.get(m)

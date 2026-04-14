@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import pytest
 
+from src.core.generators import random_hospital_market
 from src.core.hospital_resident import (
-    hospital_resident_da,
     find_hr_blocking_pairs,
+    hospital_resident_da,
     verify_rural_hospital,
 )
-from src.core.generators import random_hospital_market
 
 
 class TestHospitalResidentDA:

@@ -27,43 +27,40 @@ References:
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Set, Tuple
-
-from src.core.gale_shapley import gale_shapley, receiver_optimal
-
+from src.core.gale_shapley import gale_shapley
 
 # Type alias: a rotation is a list of (proposer, receiver) pairs.
-Rotation = List[Tuple[str, str]]
+Rotation = list[tuple[str, str]]
 
 
 def _build_reduced_lists(
-    proposer_prefs: Dict[str, List[str]],
-    receiver_prefs: Dict[str, List[str]],
-    m0: Dict[str, str],
-    m_z: Dict[str, str],
-) -> Tuple[Dict[str, List[str]], Dict[str, List[str]]]:
+    proposer_prefs: dict[str, list[str]],
+    receiver_prefs: dict[str, list[str]],
+    m0: dict[str, str],
+    m_z: dict[str, str],
+) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
     """Build reduced preference lists bounded by M_0 and M_z.
 
     For proposer m: keep only receivers between M_0(m) and M_z(m) inclusive.
     For receiver w: keep only proposers between M_0(w) and M_z(w) inclusive.
     """
-    p_rank: Dict[str, Dict[str, int]] = {
+    p_rank: dict[str, dict[str, int]] = {
         p: {r: i for i, r in enumerate(pl)} for p, pl in proposer_prefs.items()
     }
-    r_rank: Dict[str, Dict[str, int]] = {
+    r_rank: dict[str, dict[str, int]] = {
         r: {p: i for i, p in enumerate(pl)} for r, pl in receiver_prefs.items()
     }
 
     inv_m0 = {v: k for k, v in m0.items()}
     inv_mz = {v: k for k, v in m_z.items()}
 
-    reduced_p: Dict[str, List[str]] = {}
+    reduced_p: dict[str, list[str]] = {}
     for m, plist in proposer_prefs.items():
         best = p_rank[m].get(m0.get(m, ""), len(plist))
         worst = p_rank[m].get(m_z.get(m, ""), -1)
         reduced_p[m] = [w for w in plist if best <= p_rank[m][w] <= worst]
 
-    reduced_r: Dict[str, List[str]] = {}
+    reduced_r: dict[str, list[str]] = {}
     for w, plist in receiver_prefs.items():
         best = r_rank[w].get(inv_mz.get(w, ""), len(plist))
         worst = r_rank[w].get(inv_m0.get(w, ""), -1)
@@ -73,10 +70,10 @@ def _build_reduced_lists(
 
 
 def find_rotations(
-    proposer_prefs: Dict[str, List[str]],
-    receiver_prefs: Dict[str, List[str]],
-    matching: Optional[Dict[str, str]] = None,
-) -> List[Rotation]:
+    proposer_prefs: dict[str, list[str]],
+    receiver_prefs: dict[str, list[str]],
+    matching: dict[str, str] | None = None,
+) -> list[Rotation]:
     """Find all exposed rotations from a given stable matching.
 
     Parameters
@@ -96,10 +93,10 @@ def find_rotations(
     if matching is None:
         matching = gale_shapley(proposer_prefs, receiver_prefs)
 
-    p_rank: Dict[str, Dict[str, int]] = {
+    p_rank: dict[str, dict[str, int]] = {
         p: {r: i for i, r in enumerate(pl)} for p, pl in proposer_prefs.items()
     }
-    r_rank: Dict[str, Dict[str, int]] = {
+    r_rank: dict[str, dict[str, int]] = {
         r: {p: i for i, p in enumerate(pl)} for r, pl in receiver_prefs.items()
     }
 
@@ -110,7 +107,7 @@ def find_rotations(
     # current partner... actually, we find the next woman on m's reduced list.
     # "next(m)" = first w' after matching[m] on m's pref list such that
     # w' prefers m to her current partner in this matching.
-    def next_receiver(m: str) -> Optional[str]:
+    def next_receiver(m: str) -> str | None:
         w = matching[m]
         start = p_rank[m][w]
         for idx in range(start + 1, len(proposer_prefs[m])):
@@ -128,8 +125,8 @@ def find_rotations(
         return None
 
     # Build the "next" graph: m -> m' where m' = current partner of next(m).
-    next_map: Dict[str, Optional[str]] = {}
-    next_w: Dict[str, Optional[str]] = {}
+    next_map: dict[str, str | None] = {}
+    next_w: dict[str, str | None] = {}
     for m in matching:
         w_prime = next_receiver(m)
         if w_prime is not None:
@@ -140,17 +137,17 @@ def find_rotations(
             next_w[m] = None
 
     # Find all cycles in next_map.
-    visited: Set[str] = set()
-    rotations: List[Rotation] = []
+    visited: set[str] = set()
+    rotations: list[Rotation] = []
 
     for start_m in matching:
         if start_m in visited or next_map[start_m] is None:
             continue
 
         # Trace until we find a cycle or hit None.
-        path: List[str] = []
-        path_set: Set[str] = set()
-        current: Optional[str] = start_m
+        path: list[str] = []
+        path_set: set[str] = set()
+        current: str | None = start_m
 
         while current is not None and current not in visited and current not in path_set:
             path.append(current)
@@ -171,11 +168,11 @@ def find_rotations(
 
 
 def eliminate_rotation(
-    matching: Dict[str, str],
+    matching: dict[str, str],
     rotation: Rotation,
-    proposer_prefs: Dict[str, List[str]],
-    receiver_prefs: Dict[str, List[str]],
-) -> Dict[str, str]:
+    proposer_prefs: dict[str, list[str]],
+    receiver_prefs: dict[str, list[str]],
+) -> dict[str, str]:
     """Eliminate a rotation from a matching to produce a new stable matching.
 
     If rotation = [(m_0, w_0), (m_1, w_1), ..., (m_{k-1}, w_{k-1})],
@@ -196,20 +193,11 @@ def eliminate_rotation(
     dict
         New stable matching after rotation elimination.
     """
-    p_rank: Dict[str, Dict[str, int]] = {
-        p: {r: i for i, r in enumerate(pl)} for p, pl in proposer_prefs.items()
-    }
-    r_rank: Dict[str, Dict[str, int]] = {
-        r: {p: i for i, p in enumerate(pl)} for r, pl in receiver_prefs.items()
-    }
-    inv_matching = {v: k for k, v in matching.items()}
-
     new_matching = dict(matching)
     k = len(rotation)
 
     for i in range(k):
         m_i = rotation[i][0]
-        w_i = rotation[i][1]
         # m_i gets matched to w_{i+1 mod k}'s "first choice that prefers m_i"
         # Actually, in the standard rotation elimination:
         # m_i is re-matched to w_{(i+1) mod k}.
@@ -220,9 +208,9 @@ def eliminate_rotation(
 
 
 def build_rotation_poset(
-    proposer_prefs: Dict[str, List[str]],
-    receiver_prefs: Dict[str, List[str]],
-) -> Tuple[List[Rotation], Dict[int, Set[int]]]:
+    proposer_prefs: dict[str, list[str]],
+    receiver_prefs: dict[str, list[str]],
+) -> tuple[list[Rotation], dict[int, set[int]]]:
     """Build the rotation poset for a stable matching instance.
 
     Explores all rotations reachable from the proposer-optimal matching
@@ -238,9 +226,9 @@ def build_rotation_poset(
     """
     m0 = gale_shapley(proposer_prefs, receiver_prefs)
 
-    all_rotations: List[Rotation] = []
-    rotation_to_idx: Dict[str, int] = {}
-    predecessors: Dict[int, Set[int]] = {}
+    all_rotations: list[Rotation] = []
+    rotation_to_idx: dict[str, int] = {}
+    predecessors: dict[int, set[int]] = {}
 
     def rot_key(rot: Rotation) -> str:
         return str(sorted(rot))
@@ -248,11 +236,11 @@ def build_rotation_poset(
     # BFS over matchings.
     from collections import deque
 
-    queue: deque[Tuple[Dict[str, str], Set[int]]] = deque()
+    queue: deque[tuple[dict[str, str], set[int]]] = deque()
     queue.append((m0, set()))
-    visited_matchings: Set[str] = set()
+    visited_matchings: set[str] = set()
 
-    def matching_key(m: Dict[str, str]) -> str:
+    def matching_key(m: dict[str, str]) -> str:
         return str(sorted(m.items()))
 
     visited_matchings.add(matching_key(m0))

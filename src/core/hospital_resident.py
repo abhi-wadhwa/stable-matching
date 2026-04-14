@@ -19,15 +19,14 @@ References:
 from __future__ import annotations
 
 from collections import deque
-from typing import Dict, List, Optional, Set, Tuple
 
 
 def hospital_resident_da(
-    resident_prefs: Dict[str, List[str]],
-    hospital_prefs: Dict[str, List[str]],
-    quotas: Dict[str, int],
+    resident_prefs: dict[str, list[str]],
+    hospital_prefs: dict[str, list[str]],
+    quotas: dict[str, int],
     proposer: str = "resident",
-) -> Dict[str, List[str]]:
+) -> dict[str, list[str]]:
     """Run Gale-Shapley for the hospital-resident problem.
 
     Parameters
@@ -54,20 +53,20 @@ def hospital_resident_da(
 
 
 def _resident_proposing_da(
-    resident_prefs: Dict[str, List[str]],
-    hospital_prefs: Dict[str, List[str]],
-    quotas: Dict[str, int],
-) -> Dict[str, List[str]]:
+    resident_prefs: dict[str, list[str]],
+    hospital_prefs: dict[str, list[str]],
+    quotas: dict[str, int],
+) -> dict[str, list[str]]:
     """Resident-proposing deferred acceptance."""
     # Rank lookup for hospitals.
-    h_rank: Dict[str, Dict[str, int]] = {}
+    h_rank: dict[str, dict[str, int]] = {}
     for h, plist in hospital_prefs.items():
         h_rank[h] = {r: idx for idx, r in enumerate(plist)}
 
-    next_proposal: Dict[str, int] = {r: 0 for r in resident_prefs}
+    next_proposal: dict[str, int] = {r: 0 for r in resident_prefs}
 
     # Each hospital holds a set of tentatively accepted residents.
-    held: Dict[str, List[str]] = {h: [] for h in hospital_prefs}
+    held: dict[str, list[str]] = {h: [] for h in hospital_prefs}
 
     free: deque[str] = deque(resident_prefs.keys())
 
@@ -109,23 +108,23 @@ def _resident_proposing_da(
 
 
 def _hospital_proposing_da(
-    resident_prefs: Dict[str, List[str]],
-    hospital_prefs: Dict[str, List[str]],
-    quotas: Dict[str, int],
-) -> Dict[str, List[str]]:
+    resident_prefs: dict[str, list[str]],
+    hospital_prefs: dict[str, list[str]],
+    quotas: dict[str, int],
+) -> dict[str, list[str]]:
     """Hospital-proposing deferred acceptance."""
-    r_rank: Dict[str, Dict[str, int]] = {}
+    r_rank: dict[str, dict[str, int]] = {}
     for r, plist in resident_prefs.items():
         r_rank[r] = {h: idx for idx, h in enumerate(plist)}
 
     # Each hospital tracks how far down its preference list it has proposed.
-    next_proposal: Dict[str, int] = {h: 0 for h in hospital_prefs}
+    next_proposal: dict[str, int] = {h: 0 for h in hospital_prefs}
 
     # Each resident holds at most one offer.
-    resident_held: Dict[str, Optional[str]] = {r: None for r in resident_prefs}
+    resident_held: dict[str, str | None] = {r: None for r in resident_prefs}
 
     # Track how many positions each hospital still needs to fill.
-    remaining: Dict[str, int] = dict(quotas)
+    remaining: dict[str, int] = dict(quotas)
 
     # Hospitals that still have unfilled positions and people to propose to.
     active: deque[str] = deque(
@@ -157,7 +156,9 @@ def _hospital_proposing_da(
             resident_held[resident] = hospital
             remaining[hospital] -= 1
             remaining[current_h] += 1
-            if remaining[current_h] > 0 and next_proposal[current_h] < len(hospital_prefs[current_h]):
+            has_remaining = remaining[current_h] > 0
+            has_proposals = next_proposal[current_h] < len(hospital_prefs[current_h])
+            if has_remaining and has_proposals:
                 active.append(current_h)
         else:
             # Rejected.
@@ -167,14 +168,14 @@ def _hospital_proposing_da(
             active.append(hospital)
 
     # Build hospital -> residents mapping.
-    h_rank: Dict[str, Dict[str, int]] = {}
+    h_rank: dict[str, dict[str, int]] = {}
     for h, plist in hospital_prefs.items():
         h_rank[h] = {r: idx for idx, r in enumerate(plist)}
 
-    held: Dict[str, List[str]] = {h: [] for h in hospital_prefs}
-    for r, h in resident_held.items():
-        if h is not None:
-            held[h].append(r)
+    held: dict[str, list[str]] = {h: [] for h in hospital_prefs}
+    for r, held_h in resident_held.items():
+        if held_h is not None:
+            held[held_h].append(r)
 
     for h in held:
         held[h].sort(key=lambda r: h_rank[h].get(r, float("inf")))
@@ -183,7 +184,7 @@ def _hospital_proposing_da(
 
 
 def verify_rural_hospital(
-    matchings: List[Dict[str, List[str]]],
+    matchings: list[dict[str, list[str]]],
 ) -> bool:
     """Verify the Rural Hospital Theorem across multiple stable matchings.
 
@@ -217,7 +218,7 @@ def verify_rural_hospital(
     # Check 2: Under-subscribed hospitals have same residents.
     # We don't have quotas here, but we can check that hospitals with
     # fewer residents in one matching have the same residents in all.
-    hospitals = set()
+    hospitals: set[str] = set()
     for m in matchings:
         hospitals.update(m.keys())
 
@@ -237,11 +238,11 @@ def verify_rural_hospital(
 
 
 def find_hr_blocking_pairs(
-    matching: Dict[str, List[str]],
-    resident_prefs: Dict[str, List[str]],
-    hospital_prefs: Dict[str, List[str]],
-    quotas: Dict[str, int],
-) -> List[Tuple[str, str]]:
+    matching: dict[str, list[str]],
+    resident_prefs: dict[str, list[str]],
+    hospital_prefs: dict[str, list[str]],
+    quotas: dict[str, int],
+) -> list[tuple[str, str]]:
     """Find blocking pairs in a hospital-resident matching.
 
     A pair ``(r, h)`` blocks if:
@@ -263,20 +264,20 @@ def find_hr_blocking_pairs(
     list of tuple
         Blocking pairs ``(resident, hospital)``.
     """
-    r_rank: Dict[str, Dict[str, int]] = {
+    r_rank: dict[str, dict[str, int]] = {
         r: {h: i for i, h in enumerate(pl)} for r, pl in resident_prefs.items()
     }
-    h_rank: Dict[str, Dict[str, int]] = {
+    h_rank: dict[str, dict[str, int]] = {
         h: {r: i for i, r in enumerate(pl)} for h, pl in hospital_prefs.items()
     }
 
     # Build resident -> hospital mapping.
-    res_to_hosp: Dict[str, Optional[str]] = {r: None for r in resident_prefs}
+    res_to_hosp: dict[str, str | None] = {r: None for r in resident_prefs}
     for h, residents in matching.items():
         for r in residents:
             res_to_hosp[r] = h
 
-    blocking: List[Tuple[str, str]] = []
+    blocking: list[tuple[str, str]] = []
 
     for r in resident_prefs:
         current_h = res_to_hosp[r]

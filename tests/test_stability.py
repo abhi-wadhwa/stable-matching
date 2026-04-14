@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-import pytest
-
 from src.core.gale_shapley import gale_shapley, receiver_optimal
-from src.core.stability import find_blocking_pairs, is_stable, find_weakly_blocking_pairs
 from src.core.generators import random_market
+from src.core.stability import find_blocking_pairs, find_weakly_blocking_pairs, is_stable
 
 
 class TestBlockingPairs:
@@ -101,7 +99,8 @@ class TestWeakBlocking:
         # m1 matched to w1, m2 matched to w2 -- but m1 prefers w2 and w2 prefers m2.
         # Actually m1 prefers w2 (tier 0) to w1 (tier 1), w2 prefers m2 (tier 0) to m1 (tier 1).
         # So (m1, w2) is NOT blocking because w2 prefers m2 (her current partner).
-        # Let's check (m2, w1): m2 prefers w1 (tier 0) to w2 (tier 1), w1 prefers m1 (her current, tier 0) to m2 (tier 1).
+        # Check (m2, w1): m2 prefers w1 (tier 0) to w2 (tier 1),
+        # w1 prefers m1 (her current, tier 0) to m2 (tier 1).
         # So (m2, w1) is NOT blocking because w1 prefers m1.
         # This matching is actually weakly stable.
         matching = {"m1": "w1", "m2": "w2"}

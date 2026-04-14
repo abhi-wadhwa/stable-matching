@@ -5,15 +5,15 @@ from __future__ import annotations
 import pytest
 
 from src.core.gale_shapley import gale_shapley, receiver_optimal
-from src.core.stability import is_stable
+from src.core.generators import random_market
 from src.core.lattice import (
     enumerate_stable_matchings,
+    hasse_diagram,
     lattice_join,
     lattice_meet,
-    hasse_diagram,
 )
-from src.core.rotations import find_rotations, build_rotation_poset, eliminate_rotation
-from src.core.generators import random_market
+from src.core.rotations import build_rotation_poset, eliminate_rotation, find_rotations
+from src.core.stability import is_stable
 
 
 class TestEnumeration:
